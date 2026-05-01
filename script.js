@@ -207,14 +207,60 @@ function takeCommand(message) {
         setResponse("Playing: " + song);
         window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(song)}`,"_blank");
     }
+    else if (
+        message.includes("who is vivek pandey") ||
+        message.includes("do you know vivek pandey") ||
+        message.includes("tell me about vivek pandey") ||
+        message.includes("who made inertia") ||
+        message.includes("who created inertia") ||
+        message.includes("who developed inertia")
+    ) {
+        speak("Yes. Vivek Pandey is a computer science engineering student specializing in artificial intelligence and machine learning. He is the developer of Inertia and several intelligent software projects focused on real world problem solving.");
+        setResponse("Vivek Pandey — Developer of Inertia, AI and ML Engineer, Full Stack Builder.");
+    }
+
+    else if (
+        message.includes("what projects did vivek pandey build") ||
+        message.includes("vivek pandey projects") ||
+        message.includes("what has vivek built")
+    ) {
+        speak("Vivek Pandey has built projects including Inertia, a browser based AI voice assistant, and a deep learning chest X ray pneumonia detection system deployed for real time medical image predictions.");
+        setResponse("Projects: Inertia • Chest X-Ray Pneumonia Detection • Full Stack Systems");
+    }
+
+    else if (
+        message.includes("what can you do") ||
+        message.includes("your features") ||
+        message.includes("what are your features")
+    ) {
+        speak("I can perform browser automation, open websites, search the web, tell time and date, play music, respond to smart personal queries, provide motivation, tell jokes, and execute intelligent voice commands in real time.");
+        setResponse("Features: Automation • Search • Smart Q and A • Utilities • Entertainment");
+    }
+
+    else if (
+        message.includes("why are you special") ||
+        message.includes("why are you different") ||
+        message.includes("why inertia")
+    ) {
+        speak("Unlike basic assistants, I combine voice interaction, browser automation, personalized intelligence, responsive design, and real time command execution inside a fully browser based futuristic interface.");
+        setResponse("Inertia = Smart Voice + Automation + Personalized Intelligence");
+    }
+
+    else if (
+        message.includes("introduce yourself") ||
+        message.includes("who are you inertia")
+    ) {
+        speak("I am Inertia, an advanced browser based intelligent voice assistant developed to perform smart tasks, automation, web interaction, and personalized conversational responses.");
+        setResponse("I am Inertia — Advanced Intelligent Browser Voice Assistant.");
+    }
     else if (message.includes("what is") || message.includes("who is") || message.includes("tell me about")) {
-        speak("Searching the web for " + message);
-        setResponse("Searching: " + message);
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`,"_blank");
+    speak("I am looking that up for you.");
+    setResponse("Analyzing query: " + message);
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`,"_blank");
     }
     else {
-        speak("Searching Google for " + message);
-        setResponse("Searching Google for: " + message);
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`,"_blank");
+    speak("Processing your request.");
+    setResponse("Executing: " + message);
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`,"_blank");
     }
 }
