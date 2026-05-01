@@ -1,187 +1,220 @@
-const btn = document.querySelector('.talk');
-const content = document.querySelector('.content');
+const btn = document.getElementById("talk");
+const responseEl = document.getElementById("response");
+const statusPill = document.getElementById("statusPill");
+const statusText = document.getElementById("statusText");
+const terminal = document.getElementById("terminal");
+const bars = document.getElementById("bars");
+const cmdCountEl = document.getElementById("cmdCount");
 
-function speak(sentence) {
-    const text_speak = new SpeechSynthesisUtterance(sentence);
-    text_speak.rate = 1;
-    text_speak.pitch = 1;
-    window.speechSynthesis.speak(text_speak);
+let cmdCount = 0;
+
+function speak(text) {
+    window.speechSynthesis.cancel();
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.volume = 1;
+    speech.rate = 1;
+    speech.pitch = 1;
+    speech.onstart = () => setStatus("speaking", "Speaking");
+    speech.onend = () => setStatus("ready", "Ready");
+    window.speechSynthesis.speak(speech);
 }
 
-function wishMe() {
-    var day = new Date();
-    var hr = day.getHours();
-
-    if(hr >= 0 && hr < 12) {
-        speak("Good Morning ");
-    } else if(hr == 12) {
-        speak("Good Noon ");
-    } else if(hr > 12 && hr <= 16) {
-        speak("Good Afternoon ");
-    } else if(hr > 16 && hr <= 20) {
-        speak("Good Evening ");
-    } else {
-        speak("Good Night");
-    }
+function setStatus(state, label) {
+    statusPill.className = "status-pill " + state;
+    statusText.textContent = label;
 }
 
-window.addEventListener('load', ()=>{
-    speak("Inertia");
-    speak("Going online");
-    wishMe();
+function setResponse(text) {
+    responseEl.textContent = text;
+    terminal.classList.add("active");
+    setTimeout(() => terminal.classList.remove("active"), 3000);
+}
+
+window.addEventListener("load", () => {
+    setResponse("Inertia initialized. Tap the orb and speak a command...");
 });
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
 
-recognition.onresult = (event) => {
-    const current = event.resultIndex;
-    const transcript = event.results[current][0].transcript;
-    content.textContent = transcript;
-    speakThis(transcript.toLowerCase());
+if (!SpeechRecognition) {
+    btn.disabled = true;
+    setResponse("Speech recognition not supported in this browser. Try Chrome.");
+} else {
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+
+    btn.addEventListener("click", () => {
+        setStatus("listening", "Listening");
+        bars.classList.add("active");
+        btn.classList.add("active");
+        recognition.start();
+    });
+
+    recognition.onend = () => {
+        btn.classList.remove("active");
+        bars.classList.remove("active");
+        if (statusText.textContent === "Listening") setStatus("ready", "Ready");
+    };
+
+    recognition.onerror = () => {
+        btn.classList.remove("active");
+        bars.classList.remove("active");
+        setStatus("ready", "Ready");
+        setResponse("Could not hear you. Please try again.");
+    };
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+
+        recognition.stop();
+        btn.classList.remove("active");
+        bars.classList.remove("active");
+        setStatus("ready", "Ready");
+
+        cmdCount++;
+        cmdCountEl.textContent = cmdCount;
+
+        setResponse('You said: "' + transcript + '"');
+        takeCommand(transcript);
+    };
 }
 
-btn.addEventListener('click', ()=>{
-    recognition.start();
-});
+function simulateCommand(text) {
+    cmdCount++;
+    cmdCountEl.textContent = cmdCount;
+    setResponse('You said: "' + text + '"');
+    takeCommand(text.toLowerCase());
+}
 
-function speakThis(message) {
-    const speech = new SpeechSynthesisUtterance();
-    speech.text = "I did not understand what you said, please try again";
-
-    // Basic responses
-    if(message.includes('hey') || message.includes('hello')) {
-        const finalText = "Hello";
-        speech.text = finalText;
-    } else if(message.includes('how are you')) {
-        const finalText = "I am fine, tell me how can I help you";
-        speech.text = finalText;
-    } else if(message.includes('name')) {
-        const finalText = "My name is Inertia";
-        speech.text = finalText;
+function takeCommand(message) {
+    if (message.includes("hello") || message.includes("hey")) {
+        speak("Hello! I am Inertia. How can I assist you today?");
+        setResponse("Hello! I am Inertia. How can I assist you today?");
     }
-
-    // Opening websites
-    else if(message.includes('open Ghub')) {
-        window.open("https://github.com/", "_blank");
-        const finalText = "Opening github";
-        speech.text = finalText;
+    else if (message.includes("your name")) {
+        speak("I am Inertia, your AI powered voice assistant.");
+        setResponse("I am Inertia, your AI powered voice assistant.");
     }
-    else if(message.includes('open google')) {
-        window.open("https://google.com", "_blank");
-        const finalText = "Opening Google";
-        speech.text = finalText;
-    } else if(message.includes('open instagram')) {
-        window.open("https://instagram.com", "_blank");
-        const finalText = "Opening Instagram";
-        speech.text = finalText;
-    } else if(message.includes('open leetcode')) {
-        window.open("https://leetcode.com/", "_blank");
-        const finalText = "Opening Leetcode";
-        speech.text = finalText;
-    } else if(message.includes('open hackerrank')) {
-        window.open("https://www.hackerrank.com/", "_blank");
-        const finalText = "Opening Hackerrank";
-        speech.text = finalText;
+    else if (message.includes("how are you")) {
+        speak("I'm fully operational and performing better than most humans today.");
+        setResponse("I'm fully operational and performing better than most humans today.");
     }
-
-    // Search on Google or Wikipedia
-    else if(message.includes('what is') || message.includes('who is') || message.includes('what are')) {
-        window.open(`https://www.google.com/search?q=${message.replace(" ", "+")}`, "_blank");
-        const finalText = "This is what I found on the internet regarding " + message;
-        speech.text = finalText;
-    } else if(message.includes('wikipedia')) {
-        window.open(`https://en.wikipedia.org/wiki/${message.replace("wikipedia", "")}`, "_blank");
-        const finalText = "This is what I found on Wikipedia regarding " + message;
-        speech.text = finalText;
+    else if (message.includes("thank")) {
+        speak("You're welcome. Always happy to help.");
+        setResponse("You're welcome. Always happy to help.");
     }
-
-    // Play music on YouTube
-    else if(message.includes('play')) {
-        const songName = message.replace('play', '').trim();
-        window.open(`https://www.youtube.com/results?search_query=${songName}`, "_blank");
-        const finalText = `Playing ${songName} on YouTube`;
-        speech.text = finalText;
+    else if (message.includes("bye")) {
+        speak("Goodbye. Inertia shutting down.");
+        setResponse("Goodbye. Inertia shutting down.");
     }
-
-    // Simple math calculations
-    else if(message.includes('calculate')) {
-        try {
-            const expression = message.replace('calculate', '').trim();
-            const result = eval(expression); // Use cautiously
-            const finalText = `The result is ${result}`;
-            speech.text = finalText;
-        } catch (e) {
-            const finalText = "Sorry, I couldn't calculate that.";
-            speech.text = finalText;
+    else if (message.includes("who made you")) {
+        speak("I was created by Vivek Pandey as an advanced browser based AI voice assistant.");
+        setResponse("Created by Vivek Pandey.");
+    }
+    else if (message.includes("battery")) {
+        if (navigator.getBattery) {
+            navigator.getBattery().then(function(battery) {
+                let level = Math.round(battery.level * 100);
+                speak("Current battery percentage is " + level + " percent.");
+                setResponse("Battery: " + level + "%");
+            });
         }
     }
-
-    // Set a reminder
-    else if(message.includes('set reminder for')) {
-        const time = parseInt(message.match(/\d+/)); // Extracts time in minutes
-        const finalText = `Setting a reminder for ${time} minutes`;
-        speech.text = finalText;
-
-        setTimeout(() => {
-            speak("This is your reminder!");
-        }, time * 60000); // Time in milliseconds
+    else if (message.includes("time")) {
+        const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        speak("The current time is " + time);
+        setResponse("Current time: " + time);
     }
-
-    // Tell a joke
-    else if(message.includes('tell me a joke')) {
+    else if (message.includes("date")) {
+        const date = new Date().toDateString();
+        speak("Today's date is " + date);
+        setResponse("Today's date: " + date);
+    }
+    else if (message.includes("day")) {
+        const day = new Date().toLocaleDateString(undefined,{weekday:'long'});
+        speak("Today is " + day);
+        setResponse("Today is: " + day);
+    }
+    else if (message.includes("open google")) {
+        speak("Opening Google.");
+        setResponse("Opening Google...");
+        window.open("https://google.com","_blank");
+    }
+    else if (message.includes("open youtube")) {
+        speak("Opening YouTube.");
+        setResponse("Opening YouTube...");
+        window.open("https://youtube.com","_blank");
+    }
+    else if (message.includes("open github")) {
+        speak("Opening GitHub.");
+        setResponse("Opening GitHub...");
+        window.open("https://github.com","_blank");
+    }
+    else if (message.includes("open linkedin")) {
+        speak("Opening LinkedIn.");
+        setResponse("Opening LinkedIn...");
+        window.open("https://linkedin.com","_blank");
+    }
+    else if (message.includes("open instagram")) {
+        speak("Opening Instagram.");
+        setResponse("Opening Instagram...");
+        window.open("https://instagram.com","_blank");
+    }
+    else if (message.includes("open gmail")) {
+        speak("Opening Gmail.");
+        setResponse("Opening Gmail...");
+        window.open("https://mail.google.com","_blank");
+    }
+    else if (message.includes("open chatgpt")) {
+        speak("Opening Chat G P T.");
+        setResponse("Opening ChatGPT...");
+        window.open("https://chat.openai.com","_blank");
+    }
+    else if (message.includes("joke")) {
         const jokes = [
-            "Why don't scientists trust atoms? Because they make up everything!",
-            "Why did the bicycle fall over? It was two-tired!",
-            "I told my computer I needed a break, and now it won't stop sending me Kit-Kat ads."
+            "Why don't programmers like nature? It has too many bugs.",
+            "I asked my computer for a joke, it said you first.",
+            "Why do coders hate stairs? Because they prefer loops.",
+            "My WiFi and I have a strong connection emotionally, not technically."
         ];
-        const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
-        const finalText = randomJoke;
-        speech.text = finalText;
+        const joke = jokes[Math.floor(Math.random()*jokes.length)];
+        speak(joke);
+        setResponse(joke);
     }
-
-    // Time and date
-    else if(message.includes('time')) {
-        const time = new Date().toLocaleString(undefined, {hour: "numeric", minute: "numeric"});
-        const finalText = time;
-        speech.text = finalText;
-    } else if(message.includes('date')) {
-        const date = new Date().toLocaleString(undefined, {month: "short", day: "numeric"});
-        const finalText = date;
-        speech.text = finalText;
+    else if (message.includes("motivate me")) {
+        const quotes = [
+            "Dreams work only when you do.",
+            "Small progress every day creates massive results.",
+            "Winners stay consistent when others quit."
+        ];
+        const quote = quotes[Math.floor(Math.random()*quotes.length)];
+        speak(quote);
+        setResponse(quote);
     }
-
-    // Volume control
-    else if(message.includes('volume up')) {
-        speech.volume = Math.min(speech.volume + 0.1, 1);
-        const finalText = "Increasing volume";
-        speech.text = finalText;
-    } else if(message.includes('volume down')) {
-        speech.volume = Math.max(speech.volume - 0.1, 0);
-        const finalText = "Decreasing volume";
-        speech.text = finalText;
+    else if (message.includes("weather")) {
+        speak("Opening weather forecast.");
+        setResponse("Opening weather...");
+        window.open("https://weather.com","_blank");
     }
-
-    // Browser control
-    else if(message.includes('close tab')) {
-        window.close();
-        const finalText = "Closing current tab";
-        speech.text = finalText;
-    } else if(message.includes('next tab')) {
-        const finalText = "Switching to the next tab";
-        speech.text = finalText;
-        // Switching tabs isn't supported natively in JavaScript without browser extensions.
+    else if (message.includes("calculator")) {
+        speak("Opening calculator.");
+        setResponse("Opening calculator...");
+        window.open("https://www.google.com/search?q=calculator","_blank");
     }
-
-    // General search
+    else if (message.includes("play")) {
+        let song = message.replace("play","").replace("on youtube","").trim() || "music";
+        speak("Playing " + song + " on YouTube.");
+        setResponse("Playing: " + song);
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(song)}`,"_blank");
+    }
+    else if (message.includes("what is") || message.includes("who is") || message.includes("tell me about")) {
+        speak("Searching the web for " + message);
+        setResponse("Searching: " + message);
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`,"_blank");
+    }
     else {
-        window.open(`https://www.google.com/search?q=${message.replace(" ", "+")}`, "_blank");
-        const finalText = "I found some information for " + message + " on Google";
-        speech.text = finalText;
+        speak("Searching Google for " + message);
+        setResponse("Searching Google for: " + message);
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`,"_blank");
     }
-
-    speech.volume = 1;
-    speech.pitch = 1;
-    speech.rate = 1;
-    window.speechSynthesis.speak(speech);
 }
